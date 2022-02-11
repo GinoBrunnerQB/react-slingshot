@@ -2,6 +2,10 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+defaults: &defaults
+  docker:
+      - image: circleci/node:13.8.0
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -17,6 +21,36 @@ jobs:
       - run:
           name: "Say hello"
           command: "echo Hello, World!"
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: npm i
+      - save_cache:
+          key: "npm-packages"
+          paths:
+            - /src/node modules
+      - run: npm run lint
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      restore_cache:
+          keys:
+            - "npm-packages"
+      - run: npm i
+      - run: npm run test
+  analyze:
+    <<: *defaults
+    steps:
+      - checkout
+      restore_cache:
+          keys:
+            - "npm-packages"
+      - run: npm i
+      - run: npm audit
+
+
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -24,3 +58,4 @@ workflows:
   say-hello-workflow:
     jobs:
       - say-hello
+      - build
